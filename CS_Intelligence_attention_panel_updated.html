@@ -1,0 +1,424 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#111820">
+<title>CS Intelligence — Customer Success Analytics</title>
+<style>
+:root{
+ --bg:#111820;--surface:#1b2632;--surface-2:#24313f;--surface-3:#2b3948;
+ --line:#34414d;--text:#f1f5f9;--muted:#8493a5;--muted-2:#aab8c8;
+ --accent:#65d6a3;--green:#329b70;--green-soft:rgba(50,155,112,.16);
+ --yellow:#e9b653;--yellow-soft:rgba(233,182,83,.15);
+ --red:#e46b6b;--red-soft:rgba(228,107,107,.15);
+ --sidebar:260px;--radius:15px;--shadow:0 18px 50px rgba(0,0,0,.28)
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--text);font:14px/1.5 Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+button{font:inherit}
+.app{min-height:100vh}
+.sidebar{position:fixed;inset:0 auto 0 0;width:var(--sidebar);background:#151f29;border-right:1px solid var(--line);padding:22px 15px;display:flex;flex-direction:column;z-index:20;transition:width .22s ease,transform .22s ease}
+.brand{display:flex;align-items:center;gap:11px;padding:0 9px 25px;white-space:nowrap;overflow:hidden}
+.brand-mark{width:38px;height:38px;flex:none;border-radius:12px;background:#243a38;color:var(--accent);display:grid;place-items:center}
+.brand-name{font-size:17px;font-weight:750;letter-spacing:-.4px}
+.brand-sub{font-size:9px;letter-spacing:1.35px;color:var(--muted);margin-top:1px}
+.nav-label{padding:10px 11px 8px;color:#718196;font-size:10px;font-weight:750;letter-spacing:1.3px;white-space:nowrap}
+.nav{display:grid;gap:5px}
+.nav-btn{width:100%;min-width:0;border:0;background:transparent;color:#aab8c8;border-radius:10px;padding:11px 12px;display:flex;align-items:center;gap:12px;text-align:left;cursor:pointer;white-space:normal;transition:.18s}
+.nav-btn:hover{background:#202d39;color:#fff}
+.nav-btn.active{background:#293d45;color:#fff;box-shadow:inset 3px 0 var(--accent)}
+.nav-btn.active .nav-icon{color:var(--accent)}
+.nav-icon{width:19px;height:19px;flex:none;color:#94a4b5}
+.nav-text{display:flex;flex:1;min-width:0;flex-direction:column;gap:2px;font-size:12px;font-weight:650;line-height:1.25;white-space:normal;overflow-wrap:anywhere}.nav-text-en{font-size:10px;font-weight:500;color:#8493a5;line-height:1.25}.nav-btn.active .nav-text-en{color:#b4c4d2}
+.sidebar-bottom{margin-top:auto}
+.sidebar-note{margin:12px 5px 5px;padding:12px;border:1px solid #2e3b48;border-radius:11px;color:#8fa0b2;font-size:10px;line-height:1.55}
+.collapse-btn{width:100%;border:0;background:transparent;color:#91a1b2;padding:11px 12px;display:flex;align-items:center;gap:12px;border-radius:10px;cursor:pointer}
+.collapse-btn:hover{background:#202d39;color:#fff}
+.main{margin-left:var(--sidebar);min-height:100vh;transition:margin-left .22s ease}
+.topbar{height:72px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;padding:0 34px;position:sticky;top:0;background:rgba(17,24,32,.92);backdrop-filter:blur(14px);z-index:10}
+.top-left,.top-right{display:flex;align-items:center;gap:13px;min-width:0}
+.mobile-menu{display:none}
+.icon-btn{width:36px;height:36px;border:1px solid var(--line);background:var(--surface);color:var(--muted-2);border-radius:10px;display:grid;place-items:center;cursor:pointer}
+.icon-btn:hover{border-color:#607080;color:#fff}
+.top-context{min-width:0}
+.top-title{font-weight:700;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.top-sub{font-size:10px;color:var(--muted);margin-top:1px}
+.demo-pill{border:1px solid rgba(101,214,163,.28);background:rgba(101,214,163,.09);color:var(--accent);border-radius:30px;padding:6px 10px;font-size:9px;font-weight:800;letter-spacing:1px;white-space:nowrap}
+.period-pill{border:1px solid var(--line);border-radius:9px;padding:7px 10px;color:var(--muted-2);font-size:11px;white-space:nowrap}
+.content{max-width:1600px;margin:0 auto;padding:31px 34px 55px}
+.page-heading{display:flex;align-items:flex-end;justify-content:space-between;gap:20px;margin-bottom:24px}
+.eyebrow{font-size:10px;letter-spacing:1.4px;text-transform:uppercase;color:var(--accent);font-weight:800;margin-bottom:7px}
+h1{font-size:27px;line-height:1.15;letter-spacing:-.8px;margin:0;font-weight:760}
+.page-description{color:var(--muted);font-size:12px;margin:8px 0 0;max-width:720px}
+.heading-meta{display:flex;align-items:center;gap:8px;color:var(--muted);font-size:10px;white-space:nowrap}
+.section-intro{display:flex;align-items:center;justify-content:space-between;gap:15px;margin:26px 0 14px}
+.section-intro h2{font-size:14px;margin:0;font-weight:720}
+.section-intro p{margin:3px 0 0;color:var(--muted);font-size:11px}
+.metric-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.metric-card,.panel{background:linear-gradient(145deg,#1d2935,#19232e);border:1px solid #2d3b49;border-radius:var(--radius);box-shadow:0 5px 18px rgba(0,0,0,.09)}
+.metric-card{padding:17px 18px 15px;min-width:0;transition:border-color .18s,transform .18s}
+.metric-card:hover{border-color:#526474;transform:translateY(-1px)}
+.card-head{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+.metric-name{font-size:14px;font-weight:760;letter-spacing:-.2px}
+.metric-full{font-size:10px;color:var(--muted);margin-top:3px}
+.status{font-size:9px;font-weight:800;padding:5px 8px;border-radius:30px;white-space:nowrap;letter-spacing:.2px}
+.status.green{color:#7be0b1;background:var(--green-soft)}
+.status.yellow{color:#f1c96e;background:var(--yellow-soft)}
+.status.red{color:#f18b8b;background:var(--red-soft)}
+.kpi-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:17px 0 14px}
+.kpi-label{font-size:9px;letter-spacing:1px;color:var(--muted);font-weight:750}
+.kpi-value{font-size:29px;line-height:1.1;font-weight:760;letter-spacing:-1px;margin-top:4px;font-variant-numeric:tabular-nums}
+.kpi-value.fact.green{color:#65d6a3!important}.kpi-value.fact.yellow{color:#e9b653!important}.kpi-value.fact.red{color:#e46b6b!important}
+.kpi-hint{font-size:9px;color:#718196;margin-top:4px}
+.zone-title{font-size:9px;color:var(--muted);font-weight:750;letter-spacing:.8px;margin-bottom:7px}
+.zonebar{display:flex;gap:3px;height:25px;margin-bottom:10px}
+.zone-segment{display:flex;align-items:center;justify-content:center;border-radius:5px;font-size:9px;font-weight:750;min-width:0}
+.zone-segment.red{background:#a94e55;color:#fff}.zone-segment.yellow{background:#ad843b;color:#211b10}.zone-segment.green{background:#287b5b;color:#fff}
+.chart-wrap{height:116px;position:relative;margin-top:5px}
+.chart-wrap canvas{width:100%;height:100%;display:block}
+.chart-meta{display:flex;align-items:center;justify-content:space-between;margin-top:5px;color:var(--muted);font-size:9px}
+.legend{display:flex;gap:10px;align-items:center}
+.legend span{display:inline-flex;align-items:center;gap:4px}
+.dot{width:6px;height:6px;border-radius:50%;display:inline-block}
+.card-foot{border-top:1px solid #2e3c49;margin-top:13px;padding-top:11px;display:flex;justify-content:space-between;align-items:center;gap:10px}
+.card-frequency{font-size:9px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.method-btn{border:0;background:transparent;color:var(--accent);font-size:10px;font-weight:700;cursor:pointer;white-space:nowrap;padding:4px 0 4px 8px}
+.method-btn:hover{color:#a3f0ca}
+.overview-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:13px}
+.summary-card{padding:16px 17px;background:var(--surface);border:1px solid #2d3b49;border-radius:13px}
+.summary-label{font-size:10px;color:var(--muted);font-weight:650}
+.summary-value{font-size:27px;font-weight:760;letter-spacing:-.7px;margin-top:5px;font-variant-numeric:tabular-nums}
+.summary-note{font-size:9px;color:#75869a;margin-top:3px}
+.overview-lower{display:grid;grid-template-columns:1.15fr .85fr;gap:16px;margin-top:16px}
+.panel{padding:19px}
+.panel-title{font-size:13px;font-weight:750;margin:0 0 4px}
+.panel-sub{font-size:10px;color:var(--muted);margin:0 0 17px}
+.direction-row{display:grid;grid-template-columns:150px 1fr 35px;gap:10px;align-items:center;margin:15px 0}
+.direction-name{font-size:10px;color:#c3ced9}
+.progress{height:7px;background:#34414d;border-radius:20px;overflow:hidden}
+.progress-fill{height:100%;border-radius:20px;background:var(--green)}
+.direction-pct{text-align:right;font-size:10px;color:var(--muted-2);font-variant-numeric:tabular-nums}
+.issue-list{display:grid;gap:9px}
+.issue{display:flex;align-items:center;gap:10px;padding:10px;background:#202c38;border-radius:9px}
+.issue-mark{width:7px;height:7px;border-radius:50%;flex:none}
+.issue-name{font-size:10px;font-weight:700}
+.issue-detail{font-size:9px;color:var(--muted);margin-top:2px}
+.issue-value{margin-left:auto;font-size:11px;font-weight:750;white-space:nowrap}
+.empty-note{padding:20px;color:var(--muted);font-size:11px;text-align:center}
+.modal-backdrop{position:fixed;inset:0;background:rgba(3,8,13,.72);backdrop-filter:blur(5px);z-index:50;display:none;align-items:center;justify-content:center;padding:20px}
+.modal-backdrop.open{display:flex}
+.modal{width:min(650px,100%);max-height:min(88vh,850px);overflow:auto;background:#1a2530;border:1px solid #3b4b59;border-radius:18px;box-shadow:var(--shadow)}
+.modal-head{padding:22px 24px 17px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;gap:15px;position:sticky;top:0;background:#1a2530;z-index:2}
+.modal-kicker{font-size:9px;letter-spacing:1.3px;color:var(--accent);font-weight:800}
+.modal-title{font-size:22px;font-weight:780;margin:5px 0 0;letter-spacing:-.5px}
+.modal-full{font-size:11px;color:var(--muted);margin-top:3px}
+.close-btn{width:33px;height:33px;border:1px solid var(--line);background:#24313f;color:#c5d0da;border-radius:9px;cursor:pointer;flex:none}
+.modal-body{padding:21px 24px 25px}
+.modal-description{font-size:12px;color:#c1ccd7;margin:0 0 20px;line-height:1.7}
+.detail-block{margin-top:18px}
+.detail-title{font-size:10px;color:#91a1b2;letter-spacing:.9px;font-weight:800;text-transform:uppercase;margin-bottom:8px}
+.formula{padding:14px 15px;background:#111a23;border:1px solid #2d3b49;border-radius:10px;font:12px/1.7 ui-monospace,SFMono-Regular,Consolas,monospace;color:#c7f0dd;overflow-wrap:anywhere}
+.detail-copy{font-size:11px;color:#c1ccd7;line-height:1.7;margin:0}
+.zone-detail{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}
+.zone-detail div{padding:10px;border-radius:8px;font-size:10px;line-height:1.5}
+.zone-detail .z-red{background:var(--red-soft);color:#f18b8b}
+.zone-detail .z-yellow{background:var(--yellow-soft);color:#f1c96e}
+.zone-detail .z-green{background:var(--green-soft);color:#7be0b1}
+.source-tag{display:inline-flex;margin-top:12px;padding:5px 8px;border-radius:20px;background:#263846;color:#9db1c3;font-size:9px}
+.tooltip{position:fixed;pointer-events:none;z-index:40;background:#080d12;border:1px solid #536170;color:#f1f5f9;padding:7px 9px;border-radius:7px;font-size:10px;box-shadow:0 8px 20px #0008;display:none;white-space:nowrap}
+.mobile-overlay{display:none}
+.footer{border-top:1px solid var(--line);padding:18px 34px;color:#718196;font-size:9px;display:flex;justify-content:space-between;gap:15px}
+.collapsed .sidebar{width:76px;padding-inline:11px}
+.collapsed .main{margin-left:76px}
+.collapsed .brand{padding-inline:8px}
+.collapsed .brand-copy,.collapsed .nav-label,.collapsed .nav-text,.collapsed .sidebar-note,.collapsed .collapse-text{display:none}
+.collapsed .nav-btn,.collapsed .collapse-btn{justify-content:center;padding:12px}
+.collapsed .brand{justify-content:center}
+@media(max-width:1050px){.overview-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.content{padding-inline:25px}.topbar{padding-inline:25px}}
+@media(max-width:760px){
+ .sidebar{width:270px;transform:translateX(-100%);box-shadow:var(--shadow)}
+ .mobile-open .sidebar{transform:translateX(0)}
+ .main,.collapsed .main{margin-left:0}
+ .collapsed .sidebar{width:270px}
+ .mobile-menu{display:grid}
+ .collapse-btn{display:none}
+ .mobile-overlay{position:fixed;inset:0;background:#0009;z-index:19}
+ .mobile-open .mobile-overlay{display:block}
+ .topbar{height:62px;padding:0 16px}
+ .content{padding:24px 16px 38px}
+ .page-heading{align-items:flex-start;flex-direction:column;margin-bottom:20px}
+ h1{font-size:23px}
+ .heading-meta{white-space:normal}
+ .metric-grid{grid-template-columns:1fr;gap:12px}
+ .overview-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+ .summary-card{padding:13px}
+ .summary-value{font-size:23px}
+ .overview-lower{grid-template-columns:1fr}
+ .direction-row{grid-template-columns:118px 1fr 31px;gap:7px}
+ .period-pill{display:none}
+ .footer{padding:16px;flex-direction:column}
+ .modal-backdrop{padding:0;align-items:flex-end}
+ .modal{width:100%;max-height:94vh;border-radius:18px 18px 0 0}
+ .modal-head{padding:19px 19px 14px}
+ .modal-body{padding:18px 19px 25px}
+}
+@media(min-width:761px) and (max-width:1200px){.metric-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div class="app" id="app">
+  <div class="mobile-overlay" id="mobileOverlay"></div>
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-mark">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 18V12M10 18V6M16 18V9M22 18V3" stroke="currentColor" stroke-width="2.3" stroke-linecap="round"/><path d="M3 20.5h19" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+      </div>
+      <div class="brand-copy"><div class="brand-name">CS Intelligence</div><div class="brand-sub">CUSTOMER SUCCESS ANALYTICS</div></div>
+    </div>
+    <div class="nav-label">АНАЛИТИКА</div>
+    <nav class="nav" id="navigation"></nav>
+    <div class="sidebar-bottom">
+      <div class="sidebar-note">Демонстрационная витрина метрик Customer Success. Все значения условные.</div>
+      <button class="collapse-btn" id="collapseBtn" aria-label="Свернуть меню">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none"><path d="m14 5-7 7 7 7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <span class="collapse-text nav-text">Свернуть меню</span>
+      </button>
+    </div>
+  </aside>
+
+  <main class="main">
+    <header class="topbar">
+      <div class="top-left">
+        <button class="icon-btn mobile-menu" id="mobileMenu" aria-label="Открыть меню">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M4 7h16M4 12h16M4 17h16" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+        </button>
+        <div class="top-context"><div class="top-title" id="topTitle">Обзор</div><div class="top-sub">Панель аналитики Customer Success</div></div>
+      </div>
+      <div class="top-right"><span class="period-pill">Период: последние 12 месяцев</span><span class="demo-pill">DEMO DATA</span></div>
+    </header>
+
+    <div class="content">
+      <section class="page-heading">
+        <div><div class="eyebrow" id="eyebrow">CS INTELLIGENCE / OVERVIEW</div><h1 id="pageTitle">Обзор Customer Success</h1><p class="page-description" id="pageDescription">Сводная картина клиентского опыта, удержания, продуктовой ценности и операционной эффективности.</p></div>
+        <div class="heading-meta"><span>●</span><span>Демонстрационные данные</span><span>·</span><span>12 месяцев</span></div>
+      </section>
+      <div id="pageContent"></div>
+    </div>
+    <footer class="footer"><span>CS Intelligence · Customer Success Analytics</span><span>Demo version · Пороговые значения не являются универсальными отраслевыми нормативами</span></footer>
+  </main>
+</div>
+
+<div class="modal-backdrop" id="modalBackdrop" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+  <section class="modal">
+    <header class="modal-head">
+      <div><div class="modal-kicker">МЕТОДОЛОГИЯ ПОКАЗАТЕЛЯ</div><div class="modal-title" id="modalTitle">CSAT</div><div class="modal-full" id="modalFull"></div></div>
+      <button class="close-btn" id="closeModal" aria-label="Закрыть">✕</button>
+    </header>
+    <div class="modal-body" id="modalBody"></div>
+  </section>
+</div>
+<div class="tooltip" id="tooltip"></div>
+
+<script>
+const months=['Дек','Янв','Фев','Мар','Апр','Май','Июн','Июл','Авг','Сен','Окт','Ноя'];
+const navItems=[
+ {id:'overview',label:'Обзор | Overview',icon:'grid',desc:'Сводные показатели всех направлений Customer Success.'},
+ {id:'experience',label:'Клиентский опыт | Customer Experience',icon:'smile',desc:'Удовлетворённость, клиентские усилия и лояльность.'},
+ {id:'revenue',label:'Удержание и выручка | Retention & Revenue',icon:'repeat',desc:'Удержание клиентской базы, продления и динамика регулярной выручки.'},
+ {id:'product',label:'Продукт и ценность | Product & Value',icon:'package',desc:'Активация, использование продукта и скорость получения ценности.'},
+ {id:'health',label:'Здоровье клиентов | Customer Health',icon:'heart',desc:'Здоровье клиентской базы, риски и системность работы с клиентами.'},
+ {id:'operations',label:'Сервисные операции | Service Operations',icon:'headset',desc:'Качество сервиса, соблюдение SLA и регулярность бизнес-обзоров.'}
+];
+const icons={
+ grid:'<rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/>',
+ smile:'<circle cx="12" cy="12" r="9"/><path d="M8 14s1.3 2 4 2 4-2 4-2M9 9h.01M15 9h.01"/>',
+ repeat:'<path d="m17 2 4 4-4 4"/><path d="M3 11V9a3 3 0 0 1 3-3h15M7 22l-4-4 4-4"/><path d="M21 13v2a3 3 0 0 1-3 3H3"/>',
+ package:'<path d="m12 3 9 5-9 5-9-5 9-5Z"/><path d="m3 8 9 5 9-5M3 8v9l9 5 9-5V8M12 13v9"/>',
+ heart:'<path d="M20.8 8.6c0 5.2-8.8 11-8.8 11s-8.8-5.8-8.8-11A4.6 4.6 0 0 1 12 6a4.6 4.6 0 0 1 8.8 2.6Z"/><path d="M3 12h4l2-4 3 8 2-4h7"/>',
+ headset:'<path d="M3 13v-2a9 9 0 0 1 18 0v2"/><rect x="3" y="12" width="4" height="8" rx="2"/><rect x="17" y="12" width="4" height="8" rx="2"/><path d="M17 20a5 5 0 0 1-5 2h-1"/>'
+};
+const makeSeries=(start,end,seed=0)=>Array.from({length:12},(_,i)=>+(start+(end-start)*i/11+Math.sin((i+seed)*1.35)*(Math.abs(end-start)*.13||.5)).toFixed(1));
+const metrics=[
+ {id:'csat',section:'experience',name:'Удовлетворённость клиентов | CSAT',full:'Customer Satisfaction Score',fact:4.4,plan:4.5,unit:'/ 5',scale:[1,5],zones:[2,3,5],labels:['1–2','3','4–5'],freq:'После взаимодействия · сводка еженедельно',series:makeSeries(3.5,4.4,1),formula:'CSAT Top-2 Box = (Количество оценок 4–5 / Общее количество ответов) × 100%. Средняя оценка = сумма оценок / количество ответов.',definition:'Доля клиентов, положительно оценивших конкретное взаимодействие или опыт. В карточке факт показан как средняя оценка по пятибалльной шкале; дополнительно можно рассчитывать Top-2 Box.',purpose:'Оценивать качество клиентского опыта после взаимодействия, покупки или прохождения процесса.',frequency:'Сбор — после каждого релевантного взаимодействия. Анализ — еженедельно и ежемесячно.',zoneDescriptions:['1,0–2,9','3,0–3,9','4,0–5,0'],interpretation:'Высокая оценка указывает на положительный опыт. При интерпретации важно учитывать объём выборки, долю ответивших и тип взаимодействия.',source:'Шкала 1–5 и Top-2 Box — распространённая практика опросов; границы зон адаптированы для витрины.'},
+ {id:'dsat',greenExclusive:true,section:'experience',name:'Неудовлетворённость клиентов | DSAT',full:'Customer Dissatisfaction Score',fact:4.0,plan:5,unit:'%',scale:[0,20],zones:[5,10,20],labels:['>10%','5–10%','<5%'],freq:'После взаимодействия · еженедельная сводка',series:makeSeries(8.5,4,2),lowerBetter:true,formula:'DSAT = (Количество отрицательных оценок / Общее количество ответов) × 100%.',definition:'Доля отрицательных оценок в клиентских опросах. В этой демонстрационной модели отрицательными считаются оценки 1–2 по пятибалльной шкале.',purpose:'Раннее выявление проблемных взаимодействий и клиентского недовольства.',frequency:'Сбор — после взаимодействия. Анализ — еженедельно и ежемесячно.',zoneDescriptions:['Более 10%','5–10%','Менее 5%'],interpretation:'Чем ниже DSAT, тем лучше. Рекомендуется анализировать причины недовольства по темам, каналам и этапам клиентского пути.',source:'Пороговые значения 5% и 10% — демонстрационные, предложены для данного дашборда.'},
+ {id:'ces',section:'experience',name:'Усилия клиента | CES',full:'Customer Effort Score',fact:4.3,plan:4.5,unit:'/ 5',scale:[1,5],zones:[2,3,5],labels:['1–2','3','4–5'],freq:'После ключевого процесса · ежемесячно',series:makeSeries(3.4,4.3,3),formula:'Средний CES = сумма оценок лёгкости / количество ответов. Для Top-2 Box: ответы 4–5 / все ответы × 100%.',definition:'Оценка того, насколько легко клиенту выполнить задачу: получить услугу, решить проблему, оформить заказ или освоить продукт. Здесь используется шкала 1–5, где 5 — очень легко.',purpose:'Выявлять лишние усилия и трение в клиентских процессах.',frequency:'После ключевого процесса или завершения обращения; сводка ежемесячно.',zoneDescriptions:['1,0–2,9','3,0–3,9','4,0–5,0'],interpretation:'Высокая оценка означает, что клиенту было легко решить задачу. Необходимо фиксировать единое направление шкалы во всех опросах.',source:'Шкала и пороги для этой витрины заданы как демонстрационная модель; методика CES допускает разные форматы вопросов.'},
+ {id:'nps',section:'experience',name:'Индекс готовности рекомендовать | NPS',full:'Net Promoter Score',fact:42,plan:50,unit:'баллов',scale:[-100,100],zones:[0,30,100],labels:['≤0','1–30','>30'],freq:'Ежеквартально · после ключевых событий',series:makeSeries(12,42,4),formula:'NPS = % промоутеров (оценки 9–10) − % критиков (оценки 0–6). Нейтралы (7–8) не включаются в вычитание.',definition:'Индекс готовности рекомендовать компанию, продукт или услугу. Итоговое значение находится в диапазоне от −100 до +100.',purpose:'Оценивать лояльность и отслеживать изменение отношения клиентской базы.',frequency:'Обычно ежеквартально; дополнительно после важных событий клиентского пути.',zoneDescriptions:['−100…0','+1…+30','+31…+100'],interpretation:'Критики дают оценки 0–6, нейтралы 7–8, промоутеры 9–10. Границы зон итогового NPS в этой витрине условные и не являются универсальным стандартом.',source:'Категории респондентов — стандартная методика NPS; границы итоговых цветовых зон +30 и 0 — демонстрационные.'},
+ {id:'csi',section:'experience',name:'Индекс удовлетворённости клиентов | CSI',full:'Customer Satisfaction Index',fact:82,plan:85,unit:'/ 100',scale:[0,100],zones:[60,80,100],labels:['0–59','60–79','80–100'],freq:'Ежемесячно или ежеквартально',series:makeSeries(70,82,5),formula:'CSI = Σ (Нормализованная оценка каждого компонента × Вес компонента). Сумма весов = 100%.',definition:'Составной индекс удовлетворённости, объединяющий несколько аспектов клиентского опыта в одну оценку.',purpose:'Получать сводную оценку качества клиентского опыта по нескольким измерениям.',frequency:'Ежемесячно или ежеквартально — в зависимости от частоты обновления компонентов.',zoneDescriptions:['0–59','60–79','80–100'],interpretation:'Перед внедрением необходимо определить компоненты, веса и правила нормализации. CSI не имеет единой универсальной формулы.',source:'Формула и пороги — демонстрационная модель; веса должны быть откалиброваны под конкретный бизнес.'},
+
+ {id:'retention',section:'revenue',name:'Удержание клиентов | Retention Rate',full:'Customer Retention Rate',fact:92,plan:90,unit:'%',scale:[0,100],zones:[80,90,100],labels:['<80%','80–89,9%','≥90%'],freq:'Ежемесячно · ежеквартально',series:makeSeries(86,92,2),formula:'Retention = ((Клиенты на начало периода − Ушедшие клиенты за период) / Клиенты на начало периода) × 100%.',definition:'Доля клиентов из начальной когорты, которые остались с компанией к концу периода. Новые клиенты периода в знаменатель не добавляются.',purpose:'Измерять способность компании сохранять клиентскую базу.',frequency:'Ежемесячно и ежеквартально; для анализа когорт — по согласованным периодам.',zoneDescriptions:['Менее 80%','80–89,9%','90% и выше'],interpretation:'Показатель зависит от длины периода, сегмента и определения активного клиента. Для корректного сравнения фиксируйте методологию.',source:'Пороговые значения — демонстрационные; универсального норматива Retention нет.'},
+ {id:'churn',section:'revenue',name:'Отток клиентов | Churn Rate',full:'Customer Churn Rate',fact:8,plan:10,unit:'%',scale:[0,30],zones:[10,20,30],labels:['>20%','>10–20%','≤10%'],freq:'Ежемесячно · ежеквартально',series:makeSeries(13,8,3),lowerBetter:true,formula:'Churn = (Количество клиентов, ушедших из начальной когорты за период / Количество клиентов в начальной когорте) × 100%. При одинаковой базе и периоде: Churn Rate = 100% − Retention Rate.',definition:'Доля клиентов начальной базы, прекративших отношения с компанией за выбранный период. Рассчитывается на той же начальной когорте и за тот же период, что и Retention Rate.',purpose:'Контролировать потери клиентской базы и выявлять сегменты с повышенным оттоком.',frequency:'Ежемесячно и ежеквартально. Для сопоставимости с Retention Rate используйте одну и ту же начальную когорту и одинаковую длину периода. Для подписочной модели отдельно отслеживайте logo churn и revenue churn.',zoneDescriptions:['Более 20%','Более 10% и до 20%','10% и менее'],interpretation:'В этой модели Churn Rate и Retention Rate — взаимодополняющие показатели клиентской базы: их сумма равна 100%. Поэтому план Churn 10% соответствует плану Retention 90%. Пороговые зоны также зеркальны: Retention ≥90% соответствует Churn ≤10%; Retention 80–<90% — Churn >10–20%; Retention <80% — Churn >20%. Это равенство действует только при одинаковых определениях, начальной когорте и периоде.',source:'Пороговые значения демонстрационные и согласованы с зонами Retention Rate; это не универсальные отраслевые нормативы.'},
+ {id:'renewal',section:'revenue',name:'Продление договоров | Renewal Rate',full:'Contract Renewal Rate',fact:88,plan:85,unit:'%',scale:[0,100],zones:[70,85,100],labels:['<70%','70–84,9%','≥85%'],freq:'Ежемесячно · по календарю продлений',series:makeSeries(78,88,4),formula:'Renewal Rate = (Количество продлённых договоров / Количество договоров, подлежащих продлению) × 100%.',definition:'Доля договоров, успешно продлённых среди тех, срок продления которых наступил в выбранном периоде.',purpose:'Контролировать результативность продлений и работу с риском непродления.',frequency:'Ежемесячно с анализом по календарю продлений; итогово — ежеквартально.',zoneDescriptions:['Менее 70%','70–84,9%','85% и выше'],interpretation:'Следует заранее определить правила учёта частичных продлений, досрочных расторжений и договоров, не подлежащих продлению.',source:'Пороговые значения — демонстрационные.'},
+ {id:'grr',section:'revenue',name:'Валовой коэффициент удержания выручки | GRR',full:'Gross Revenue Retention',fact:88,plan:90,unit:'%',scale:[0,100],zones:[80,90,100],labels:['<80%','80–89,9%','≥90%'],freq:'Ежемесячно · ежеквартально',series:makeSeries(82,88,5),formula:'GRR = ((Начальная регулярная выручка − Churn Revenue − Contraction Revenue) / Начальная регулярная выручка) × 100%.',definition:'Доля регулярной выручки от существующей клиентской базы, сохранённая за период без учёта расширения контрактов.',purpose:'Показывать, насколько хорошо бизнес сохраняет текущую выручку от действующих клиентов.',frequency:'Ежемесячно и ежеквартально; для SaaS обычно используется MRR или ARR.',zoneDescriptions:['Менее 80%','80–89,9%','90% и выше'],interpretation:'GRR не может превышать 100%. Expansion Revenue в расчёт не включается. Учитывайте только сопоставимую начальную клиентскую базу.',source:'90% часто используют как ориентир для SaaS, но пороги зон здесь демонстрационные, а не универсальный стандарт.'},
+ {id:'nrr',section:'revenue',name:'Чистый коэффициент удержания выручки | NRR',full:'Net Revenue Retention',fact:105,plan:100,unit:'%',scale:[0,150],zones:[90,100,150],labels:['<90%','90–99,9%','≥100%'],freq:'Ежемесячно · ежеквартально',series:makeSeries(94,105,1),formula:'NRR = ((Начальная регулярная выручка − Churn − Contraction + Expansion) / Начальная регулярная выручка) × 100%.',definition:'Изменение регулярной выручки от начальной клиентской базы с учётом оттока, сокращения и расширения контрактов.',purpose:'Оценивать способность развивать выручку от существующих клиентов без учёта новых продаж.',frequency:'Ежемесячно и ежеквартально.',zoneDescriptions:['Менее 90%','90–99,9%','100% и выше'],interpretation:'NRR выше 100% означает, что расширение выручки перекрыло потери от оттока и сокращения. Верхней фиксированной границы нет.',source:'100% — математически значимый рубеж сохранения выручки; остальные пороги демонстрационные.'},
+ {id:'expansion',section:'revenue',name:'Рост выручки от действующих клиентов | Expansion Revenue Rate',full:'Expansion Revenue Rate',fact:7,plan:5,unit:'%',scale:[0,20],zones:[0,5,20],labels:['<0%','0–4,9%','≥5%'],freq:'Ежемесячно · ежеквартально',series:makeSeries(2,7,6),formula:'Expansion Revenue Rate = (Дополнительная регулярная выручка от действующих клиентов / Начальная регулярная выручка этой базы) × 100%.',definition:'Относительный прирост регулярной выручки от существующих клиентов за счёт расширения использования, апсейла или кросс-сейла.',purpose:'Отслеживать рост и монетизацию действующей клиентской базы.',frequency:'Ежемесячно и ежеквартально.',zoneDescriptions:['Отрицательная динамика','0–4,9%','5% и выше'],interpretation:'Методика должна исключать новую клиентскую выручку и отдельно определять влияние скидок, валюты и изменения тарифов.',source:'Пороги — демонстрационные; expansion обычно анализируют вместе с NRR.'},
+
+ {id:'activation',section:'product',name:'Активация продукта | Activation Rate',full:'Product Activation Rate',fact:74,plan:70,unit:'%',scale:[0,100],zones:[50,70,100],labels:['<50%','50–69,9%','≥70%'],freq:'Еженедельно · ежемесячно',series:makeSeries(59,74,2),formula:'Activation Rate = (Новые клиенты, выполнившие определённое ключевое действие / Все новые клиенты когорты) × 100%.',definition:'Доля новых клиентов, достигших заранее определённого события активации — первого действия, связанного с получением ценности.',purpose:'Оценивать, насколько успешно новые клиенты переходят от регистрации или покупки к реальному использованию продукта.',frequency:'Еженедельно по когортам; ежемесячная сводка.',zoneDescriptions:['Менее 50%','50–69,9%','70% и выше'],interpretation:'Ключевое действие активации должно быть связано с ценностью продукта, а не просто с входом в систему.',source:'Пороги — демонстрационные; событие активации определяется продуктовой аналитикой.'},
+ {id:'adoption',section:'product',name:'Использование продукта | Product Adoption Rate',full:'Product Adoption Rate',fact:68,plan:70,unit:'%',scale:[0,100],zones:[40,70,100],labels:['<40%','40–69,9%','≥70%'],freq:'Еженедельно · ежемесячно',series:makeSeries(48,68,4),formula:'Adoption Rate = (Клиенты, использующие выбранную ключевую функцию / Клиенты, для которых функция доступна) × 100%.',definition:'Доля подходящих клиентов, которые используют продукт или конкретную ключевую функциональность.',purpose:'Понимать глубину внедрения продукта и находить возможности повысить ценность использования.',frequency:'Еженедельно или ежемесячно в зависимости от цикла использования.',zoneDescriptions:['Менее 40%','40–69,9%','70% и выше'],interpretation:'Нужно заранее определить активное использование, окно наблюдения и перечень функций, значимых для клиентского результата.',source:'Пороги — демонстрационные; универсального норматива adoption нет.'},
+ {id:'mau',section:'product',name:'Активные пользователи за месяц | MAU',full:'Monthly Active Users Rate',fact:62,plan:60,unit:'%',scale:[0,100],zones:[30,60,100],labels:['<30%','30–59,9%','≥60%'],freq:'Ежедневный сбор · ежемесячный отчёт',series:makeSeries(45,62,5),formula:'MAU Rate = (Уникальные активные пользователи за месяц / Все пользователи, имеющие право доступа) × 100%.',definition:'Доля доступной пользовательской базы, проявившей активность в течение календарного месяца. Витрина показывает относительную долю, а не абсолютное число MAU.',purpose:'Оценивать регулярность использования продукта целевой аудиторией.',frequency:'События фиксируются ежедневно; показатель агрегируется ежемесячно.',zoneDescriptions:['Менее 30%','30–59,9%','60% и выше'],interpretation:'Критерий активности должен быть осмысленным действием. Для сезонных продуктов сравнивайте сопоставимые периоды.',source:'Пороги — демонстрационные; определение active user зависит от продукта.'},
+ {id:'seat',section:'product',name:'Использование оплаченных лицензий | Seat Utilization',full:'Paid Seat Utilization',fact:76,plan:80,unit:'%',scale:[0,100],zones:[50,80,100],labels:['<50%','50–79,9%','≥80%'],freq:'Еженедельно · ежемесячно',series:makeSeries(61,76,3),formula:'Seat Utilization = (Активные оплаченные места / Все приобретённые места) × 100%.',definition:'Доля приобретённых лицензий или мест, которые реально используются активными пользователями.',purpose:'Выявлять недоиспользование лицензий и потенциальные риски непродления или сокращения контракта.',frequency:'Еженедельно для оперативного контроля; ежемесячно для анализа аккаунтов.',zoneDescriptions:['Менее 50%','50–79,9%','80% и выше'],interpretation:'В некоторых продуктах низкая утилизация лицензий не означает низкую ценность: учитывайте модель лицензирования и сезонность.',source:'Пороги — демонстрационные.'},
+ {id:'ttv',section:'product',name:'Время до получения ценности | TTV',full:'Time to Value',fact:6,plan:7,unit:'дней',scale:[0,30],zones:[7,14,30],labels:['>14 дней','8–14 дней','≤7 дней'],freq:'По новым клиентам · еженедельная когортная сводка',series:makeSeries(15,6,6),lowerBetter:true,formula:'TTV = Дата первого подтверждённого получения ценности − Дата начала взаимодействия с продуктом.',definition:'Время от старта клиентского пути до момента, когда клиент впервые получает согласованную ценность от продукта или услуги.',purpose:'Сокращать время до первого результата и повышать вероятность успешной активации.',frequency:'Для каждого нового клиента; анализ по когортам еженедельно или ежемесячно. В карточке используется медиана.',zoneDescriptions:['Более 14 дней','8–14 дней','До 7 дней'],interpretation:'Точка начала и событие value должны быть определены заранее. Для длинных внедрений полезно отслеживать промежуточные milestones.',source:'Пороги 7 и 14 дней — демонстрационные, не отраслевой стандарт.'},
+ {id:'onboarding',section:'product',name:'Завершение адаптации | Onboarding Completion',full:'Onboarding Completion Rate',fact:87,plan:85,unit:'%',scale:[0,100],zones:[70,85,100],labels:['<70%','70–84,9%','≥85%'],freq:'Еженедельно · ежемесячно',series:makeSeries(73,87,1),formula:'Onboarding Completion = (Клиенты, завершившие все обязательные этапы / Клиенты, проходившие onboarding в когорте) × 100%.',definition:'Доля клиентов, завершивших согласованный набор этапов адаптации или внедрения.',purpose:'Контролировать прохождение стартового клиентского пути и выявлять точки отсева.',frequency:'Еженедельно по активным когортам; итоговая оценка ежемесячно.',zoneDescriptions:['Менее 70%','70–84,9%','85% и выше'],interpretation:'Для честного расчёта учитывайте только клиентов, у которых уже было достаточно времени завершить onboarding, либо отдельно показывайте completion on time.',source:'Пороги — демонстрационные.'},
+
+ {id:'healthscore',section:'health',name:'Индекс здоровья клиента | Customer Health Score',full:'Customer Health Score',fact:76,plan:71,unit:'/ 100',scale:[0,100],zones:[40,70,100],labels:['0–40','41–70','71–100'],freq:'Еженедельно · при изменении сигналов',series:makeSeries(58,76,3),formula:'Health Score = Σ (Нормализованный компонент × Вес компонента). Пример: Adoption 30% + Satisfaction 25% + Engagement 20% + Support 15% + Success Plan 10%.',definition:'Составной индекс здоровья аккаунта, объединяющий продуктовые, поведенческие и сервисные сигналы.',purpose:'Ранжировать клиентскую базу по состоянию и заранее выявлять аккаунты, которым требуется внимание.',frequency:'Пересчёт еженедельно или при поступлении значимых событий.',zoneDescriptions:['0–40','41–70','71–100'],interpretation:'Весовые коэффициенты и пороги необходимо калибровать на истории успешных клиентов и случаев оттока. Одинаковая модель не подходит всем продуктам.',source:'Компоненты и веса — пример демонстрационной модели; границы зон также заданы для витрины.'},
+ {id:'atrisk',greenExclusive:true,section:'health',name:'Клиенты в зоне риска | At-Risk Customers',full:'At-Risk Customer Share',fact:8,plan:5,unit:'%',scale:[0,30],zones:[5,15,30],labels:['>15%','5–15%','<5%'],freq:'Еженедельно',series:makeSeries(17,8,5),lowerBetter:true,formula:'At-Risk Share = (Количество активных клиентов в зоне риска / Общее количество активных клиентов) × 100%.',definition:'Доля активной клиентской базы, отнесённой к зоне риска по принятой модели Customer Health или набору риск-сигналов.',purpose:'Контролировать масштаб потенциального оттока и приоритизировать работу CS-команды.',frequency:'Еженедельно; при наличии событийных сигналов — в режиме близком к реальному времени.',zoneDescriptions:['Более 15%','5–15%','Менее 5%'],interpretation:'Важно формализовать критерии риска и не смешивать высокий риск с фактическим оттоком. Показатель лучше анализировать по сегментам и выручке.',source:'Пороги — демонстрационные.'},
+ {id:'successplan',section:'health',name:'Покрытие планами успеха | Success Plan Coverage',full:'Customer Success Plan Coverage',fact:84,plan:90,unit:'%',scale:[0,100],zones:[70,90,100],labels:['<70%','70–89,9%','≥90%'],freq:'Ежемесячно',series:makeSeries(68,84,2),formula:'Success Plan Coverage = (Активные клиенты с актуальным согласованным Success Plan / Все клиенты, для которых план обязателен) × 100%.',definition:'Доля целевых аккаунтов, для которых существует актуальный план достижения согласованных клиентских результатов.',purpose:'Обеспечивать системную работу с целями клиента, ожидаемыми результатами, ответственными и сроками.',frequency:'Ежемесячно; обновление после изменения целей или статуса клиента.',zoneDescriptions:['Менее 70%','70–89,9%','90% и выше'],interpretation:'В знаменатель следует включать только те сегменты, для которых Success Plan действительно обязателен.',source:'Пороги — демонстрационные.'},
+
+ {id:'sla',section:'operations',name:'Соблюдение SLA | SLA Compliance',full:'Service Level Agreement Compliance',fact:96,plan:95,unit:'%',scale:[0,100],zones:[90,95,100],labels:['<90%','90–94,9%','≥95%'],freq:'Ежедневно · еженедельно',series:makeSeries(90,96,1),formula:'SLA Compliance = (Обращения, обработанные в рамках применимого SLA / Все обращения, подлежащие учёту по SLA) × 100%.',definition:'Доля обращений или обязательств, выполненных в пределах согласованного уровня сервиса.',purpose:'Контролировать выполнение сервисных обязательств и своевременно обнаруживать перегрузку процессов.',frequency:'Ежедневный мониторинг; недельная и месячная отчётность.',zoneDescriptions:['Менее 90%','90–94,9%','95% и выше'],interpretation:'Необходимо явно определить тип SLA, календарь, паузы, исключения и правила остановки таймера. Разные приоритеты могут иметь разные цели.',source:'Пороги — демонстрационные; реальная цель определяется договором и операционной моделью.'},
+ {id:'fcr',section:'operations',name:'Решение при первом обращении | FCR',full:'First Contact Resolution',fact:78,plan:80,unit:'%',scale:[0,100],zones:[70,80,100],labels:['<70%','70–79,9%','≥80%'],freq:'Еженедельно · ежемесячно',series:makeSeries(69,78,4),formula:'FCR = (Обращения, решённые при первом контакте / Все обращения в выбранной выборке) × 100%.',definition:'Доля обращений, решение которых достигнуто при первом контакте без повторного обращения по той же причине в установленном окне.',purpose:'Оценивать способность сервиса решать клиентские задачи быстро и без лишних повторных контактов.',frequency:'Еженедельно и ежемесячно; окно повторного обращения фиксируется методологией.',zoneDescriptions:['Менее 70%','70–79,9%','80% и выше'],interpretation:'Нужно определить, что считать первым контактом и повторным обращением, а также исключить случаи, где многоэтапное решение объективно необходимо.',source:'Пороги — демонстрационные; методика определения FCR зависит от каналов и процессов.'},
+ {id:'qbr',section:'operations',name:'Проведение бизнес-обзоров | QBR / EBR Coverage',full:'Quarterly / Executive Business Review Coverage',fact:82,plan:90,unit:'%',scale:[0,100],zones:[70,90,100],labels:['<70%','70–89,9%','≥90%'],freq:'Ежеквартально',series:makeSeries(66,82,5),formula:'QBR Coverage = (Проведённые бизнес-обзоры / Запланированные обзоры, подлежащие проведению) × 100%.',definition:'Доля запланированных квартальных или executive business reviews, которые фактически состоялись в выбранном периоде.',purpose:'Контролировать регулярность стратегического взаимодействия с ключевыми клиентами и пересмотр планов достижения ценности.',frequency:'Ежеквартально; операционный контроль календаря — ежемесячно.',zoneDescriptions:['Менее 70%','70–89,9%','90% и выше'],interpretation:'В знаменатель включаются только обзоры, срок которых наступил. Отменённые по согласованию встречи нужно учитывать по заранее установленному правилу.',source:'Пороги — демонстрационные.'}
+];
+const sectionInfo=Object.fromEntries(navItems.map(x=>[x.id,x]));
+const fmt=(v,m)=>m.id==='nps'?(v>0?'+':'')+Math.round(v):m.scale[1]===5?v.toFixed(1).replace('.',','):(Number.isInteger(v)?v:v.toFixed(1).replace('.',','));
+function zoneOf(v,m){
+ const [lo,mid,hi]=m.zones;
+ if(m.lowerBetter){
+  const isGreen=m.greenExclusive ? v<lo : v<=lo;
+  if(isGreen)return 'green';
+  if(v<=mid)return 'yellow';
+  return 'red';
+ }
+ if(v<lo)return 'red';
+ if(v<mid)return 'yellow';
+ return 'green';
+}
+const statusLabel={green:'Зелёная зона',yellow:'Жёлтая зона',red:'Красная зона'};
+function iconSvg(key){return `<svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${icons[key]||icons.grid}</svg>`}
+function renderNav(active){
+ const nav=document.getElementById('navigation');
+ nav.innerHTML=navItems.map(n=>{const parts=n.label.split(' | ');return `<button class="nav-btn ${active===n.id?'active':''}" data-section="${n.id}" title="${n.label}">${iconSvg(n.icon)}<span class="nav-text"><span>${parts[0]}</span><span class="nav-text-en">${parts[1]||''}</span></span></button>`}).join('');
+ nav.querySelectorAll('button').forEach(b=>b.addEventListener('click',()=>showSection(b.dataset.section)));
+}
+function drawChart(canvas,m){
+ const ctx=canvas.getContext('2d'),w=canvas.clientWidth,h=canvas.clientHeight,dpr=window.devicePixelRatio||1;
+ canvas.width=Math.max(1,w*dpr);canvas.height=Math.max(1,h*dpr);ctx.scale(dpr,dpr);
+ const pad={l:8,r:8,t:9,b:20},cw=w-pad.l-pad.r,ch=h-pad.t-pad.b;
+ const min=m.scale[0],max=m.scale[1],range=max-min;
+ const y=v=>pad.t+(max-v)/range*ch,x=i=>pad.l+i/(m.series.length-1)*cw;
+ const [a,b]=m.zones;
+ const bands=m.lowerBetter
+  ?[[min,a,'rgba(50,155,112,.18)'],[a,b,'rgba(233,182,83,.15)'],[b,max,'rgba(228,107,107,.15)']]
+  :[[max,b,'rgba(50,155,112,.18)'],[b,a,'rgba(233,182,83,.15)'],[a,min,'rgba(228,107,107,.15)']];
+ bands.forEach(([v1,v2,color])=>{
+  const y1=y(v1),y2=y(v2),top=Math.min(y1,y2),height=Math.abs(y2-y1);
+  ctx.fillStyle=color;
+  ctx.fillRect(pad.l,top,cw,height);
+ });
+ ctx.strokeStyle='rgba(132,147,165,.2)';ctx.lineWidth=1;ctx.setLineDash([3,4]);
+ for(let i=0;i<3;i++){let yy=pad.t+i*ch/2;ctx.beginPath();ctx.moveTo(pad.l,yy);ctx.lineTo(w-pad.r,yy);ctx.stroke()}
+ ctx.setLineDash([]);
+ ctx.beginPath();m.series.forEach((v,i)=>{if(i===0)ctx.moveTo(x(i),y(v));else ctx.lineTo(x(i),y(v))});
+ ctx.lineWidth=2.2;ctx.strokeStyle='#65d6a3';ctx.lineJoin='round';ctx.lineCap='round';ctx.stroke();
+ m.series.forEach((v,i)=>{let z=zoneOf(v,m),c=z==='green'?'#65d6a3':z==='yellow'?'#e9b653':'#e46b6b';ctx.beginPath();ctx.arc(x(i),y(v),3.1,0,Math.PI*2);ctx.fillStyle=c;ctx.fill();ctx.strokeStyle='#1b2632';ctx.lineWidth=1.3;ctx.stroke()});
+ ctx.fillStyle='#8493a5';ctx.font='9px system-ui';ctx.textAlign='center';
+ [0,2,4,6,8,10,11].forEach(i=>ctx.fillText(months[i],x(i),h-4));
+ canvas._chart={m,x,y,pad,w,h};
+}
+function metricCard(m){
+ const z=zoneOf(m.fact,m),factColor=z;
+ const chartId='chart-'+m.id;
+ return `<article class="metric-card">
+  <div class="card-head"><div><div class="metric-name">${m.name}</div><div class="metric-full">${m.full}</div></div><span class="status ${z}">${statusLabel[z]}</span></div>
+  <div class="kpi-row">
+   <div><div class="kpi-label">ФАКТ · ${statusLabel[z].toUpperCase()}</div><div class="kpi-value fact ${factColor}" style="color:${z==='green'?'#65d6a3':z==='yellow'?'#e9b653':'#e46b6b'} !important">${fmt(m.fact,m)}<span style="font-size:12px;color:var(--muted);font-weight:550;letter-spacing:0"> ${m.unit}</span></div><div class="kpi-hint">Текущее демонстрационное значение</div></div>
+   <div><div class="kpi-label">ПЛАН</div><div class="kpi-value">${fmt(m.plan,m)}<span style="font-size:12px;color:var(--muted);font-weight:550;letter-spacing:0"> ${m.unit}</span></div><div class="kpi-hint">Целевое значение</div></div>
+  </div>
+  <div class="zone-title">ПОРОГИ ОЦЕНКИ</div>
+  <div class="zonebar"><div class="zone-segment red" style="flex:1">${m.labels[0]}</div><div class="zone-segment yellow" style="flex:1">${m.labels[1]}</div><div class="zone-segment green" style="flex:1">${m.labels[2]}</div></div>
+  <div class="zone-title">ДИНАМИКА · 12 МЕСЯЦЕВ</div>
+  <div class="chart-wrap"><canvas id="${chartId}" aria-label="Динамика ${m.name} за 12 месяцев"></canvas></div>
+  <div class="chart-meta"><span>Дек — Ноя</span><span class="legend"><span><i class="dot" style="background:var(--red)"></i>Критично</span><span><i class="dot" style="background:var(--yellow)"></i>Риск</span><span><i class="dot" style="background:var(--green)"></i>Норма</span></span></div>
+  <div class="card-foot"><span class="card-frequency">${m.freq}</span><button class="method-btn" data-method="${m.id}">Методология ↗</button></div>
+ </article>`;
+}
+function renderMetricSection(id){
+ const mset=metrics.filter(m=>m.section===id);
+ return `<div class="metric-grid">${mset.map(metricCard).join('')}</div>`;
+}
+function summaryCard(label,value,note,color=''){
+ return `<div class="summary-card"><div class="summary-label">${label}</div><div class="summary-value" ${color?`style="color:${color}"`:''}>${value}</div><div class="summary-note">${note}</div></div>`;
+}
+function renderOverview(){
+ const counts={green:0,yellow:0,red:0};metrics.forEach(m=>counts[zoneOf(m.fact,m)]++);
+ const greenPct=Math.round(counts.green/metrics.length*100);
+ const attention=metrics
+  .map(m=>({...m,zone:zoneOf(m.fact,m)}))
+  .filter(m=>m.zone==='red'||m.zone==='yellow')
+  .sort((a,b)=>{
+   const priority={red:0,yellow:1};
+   if(priority[a.zone]!==priority[b.zone])return priority[a.zone]-priority[b.zone];
+   return Math.abs((b.fact-b.plan)/(Math.abs(b.plan)||1))-Math.abs((a.fact-a.plan)/(Math.abs(a.plan)||1));
+  });
+ const direction=navItems.filter(n=>n.id!=='overview').map(n=>{const ms=metrics.filter(m=>m.section===n.id);const score=Math.round(ms.filter(m=>zoneOf(m.fact,m)==='green').length/ms.length*100);return {n,score,ms}});
+ return `<div class="overview-grid">
+ ${summaryCard('Метрик в витрине',metrics.length,'5 направлений')}
+ ${summaryCard('В зелёной зоне',counts.green,`${greenPct}% от всех показателей`,'#65d6a3')}
+ ${summaryCard('Требуют внимания',counts.yellow,'Жёлтая зона','#e9b653')}
+ ${summaryCard('Критические',counts.red,'Красная зона','#e46b6b')}
+ </div>
+ <div class="overview-lower">
+  <section class="panel"><h3 class="panel-title">Состояние направлений</h3><p class="panel-sub">Доля метрик в зелёной зоне по каждому направлению</p>
+   ${direction.map(d=>`<div class="direction-row"><div class="direction-name">${d.n.label}</div><div class="progress"><div class="progress-fill" style="width:${d.score}%"></div></div><div class="direction-pct">${d.score}%</div></div>`).join('')}
+   <div class="panel-sub" style="margin:18px 0 0">Процент рассчитан по количеству метрик, а не по их финансовой значимости.</div>
+  </section>
+  <section class="panel"><h3 class="panel-title">Требуют внимания</h3><p class="panel-sub">Все метрики в жёлтой зоне риска и красной критической зоне</p>
+   <div class="issue-list">${attention.length?attention.map(m=>{const color=m.zone==='red'?'#e46b6b':'#e9b653';const textColor=m.zone==='red'?'#f18b8b':'#e9b653';const label=m.zone==='red'?'Критично':'Зона риска';return `<div class="issue"><i class="issue-mark" style="background:${color}"></i><div><div class="issue-name">${m.name}</div><div class="issue-detail">${sectionInfo[m.section].label} · ${label}</div></div><div class="issue-value" style="color:${textColor}">${fmt(m.fact,m)} ${m.unit}</div></div>`}).join(''):'<div class="empty-note">Все показатели находятся в зелёной зоне</div>'}</div>
+  </section>
+ </div>
+ <div class="section-intro"><div><h2>Все направления</h2><p>Перейдите в раздел, чтобы изучить отдельные метрики и методологию.</p></div></div>
+ <div class="metric-grid">${direction.map(d=>`<article class="metric-card"><div class="card-head"><div><div class="metric-name">${d.n.label}</div><div class="metric-full">${d.ms.length} метрик · ${d.n.desc}</div></div><span class="status ${d.score>=70?'green':d.score>=40?'yellow':'red'}">${d.score}% в норме</span></div><div class="card-foot" style="border:0;margin-top:15px;padding-top:0"><span class="card-frequency">${d.ms.map(m=>m.name).join(' · ')}</span><button class="method-btn" data-section="${d.n.id}">Открыть раздел ↗</button></div></article>`).join('')}</div>`;
+}
+function showSection(id){
+ const info=sectionInfo[id]||sectionInfo.overview;
+ document.getElementById('topTitle').textContent=info.label;
+ document.getElementById('pageTitle').textContent=info.label;
+ document.getElementById('pageDescription').textContent=id==='overview'?'Сводная картина клиентского опыта, удержания, продуктовой ценности и операционной эффективности.':info.desc;
+ document.getElementById('eyebrow').textContent='CS INTELLIGENCE / '+id.toUpperCase();
+ const content=document.getElementById('pageContent');
+ content.innerHTML=id==='overview'?renderOverview():`<div class="section-intro" style="margin-top:0"><div><h2>${metrics.filter(m=>m.section===id).length} показателей</h2><p>Факт, целевое значение, динамика и методология расчёта.</p></div></div>${renderMetricSection(id)}`;
+ renderNav(id);
+ content.querySelectorAll('canvas').forEach(c=>{const m=metrics.find(x=>'chart-'+x.id===c.id);if(m)drawChart(c,m)});
+ content.querySelectorAll('[data-method]').forEach(b=>b.addEventListener('click',()=>openMethod(b.dataset.method)));
+ content.querySelectorAll('[data-section]').forEach(b=>b.addEventListener('click',()=>showSection(b.dataset.section)));
+ document.getElementById('app').classList.remove('mobile-open');
+ window.scrollTo({top:0,behavior:'smooth'});
+}
+function openMethod(id){
+ const m=metrics.find(x=>x.id===id);if(!m)return;
+ const z=zoneOf(m.fact,m);
+ document.getElementById('modalTitle').textContent=m.name;
+ document.getElementById('modalFull').textContent=m.full;
+ document.getElementById('modalBody').innerHTML=`
+ <p class="modal-description">${m.definition}</p>
+ <div class="detail-block"><div class="detail-title">Зачем отслеживать</div><p class="detail-copy">${m.purpose}</p></div>
+ <div class="detail-block"><div class="detail-title">Формула расчёта</div><div class="formula">${m.formula}</div></div>
+ <div class="detail-block"><div class="detail-title">Пороговые значения</div><div class="zone-detail"><div class="z-red"><b>Красная зона</b><br>${m.zoneDescriptions[0]}</div><div class="z-yellow"><b>Жёлтая зона</b><br>${m.zoneDescriptions[1]}</div><div class="z-green"><b>Зелёная зона</b><br>${m.zoneDescriptions[2]}</div></div></div>
+ <div class="detail-block"><div class="detail-title">Частота сбора</div><p class="detail-copy">${m.frequency}</p></div>
+ <div class="detail-block"><div class="detail-title">Интерпретация и ограничения</div><p class="detail-copy">${m.interpretation}</p></div>
+ <div class="source-tag">${m.source}</div>`;
+ document.getElementById('modalBackdrop').classList.add('open');
+ document.getElementById('closeModal').focus();
+}
+function closeMethod(){document.getElementById('modalBackdrop').classList.remove('open')}
+document.getElementById('closeModal').addEventListener('click',closeMethod);
+document.getElementById('modalBackdrop').addEventListener('click',e=>{if(e.target.id==='modalBackdrop')closeMethod()});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeMethod();document.getElementById('app').classList.remove('mobile-open')}});
+document.getElementById('collapseBtn').addEventListener('click',()=>document.getElementById('app').classList.toggle('collapsed'));
+document.getElementById('mobileMenu').addEventListener('click',()=>document.getElementById('app').classList.add('mobile-open'));
+document.getElementById('mobileOverlay').addEventListener('click',()=>document.getElementById('app').classList.remove('mobile-open'));
+document.getElementById('pageContent').addEventListener('mousemove',e=>{
+ const canvas=e.target.closest('canvas');if(!canvas||!canvas._chart)return;
+ const r=canvas.getBoundingClientRect(),c=canvas._chart,px=e.clientX-r.left;
+ let i=Math.round((px-c.pad.l)/(c.w-c.pad.l-8)*11);i=Math.max(0,Math.min(11,i));
+ const v=c.m.series[i],tip=document.getElementById('tooltip');
+ tip.textContent=`${months[i]} · ${fmt(v,c.m)} ${c.m.unit} · ${statusLabel[zoneOf(v,c.m)]}`;
+ tip.style.display='block';tip.style.left=Math.min(e.clientX+12,window.innerWidth-210)+'px';tip.style.top=(e.clientY-35)+'px';
+});
+document.getElementById('pageContent').addEventListener('mouseleave',()=>document.getElementById('tooltip').style.display='none');
+let resizeTimer;window.addEventListener('resize',()=>{clearTimeout(resizeTimer);resizeTimer=setTimeout(()=>document.querySelectorAll('.chart-wrap canvas').forEach(c=>{const m=metrics.find(x=>'chart-'+x.id===c.id);if(m)drawChart(c,m)}),100)});
+showSection('overview');
+</script>
+</body>
+</html>
